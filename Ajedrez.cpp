@@ -1,26 +1,24 @@
 #include <iostream>
 #include <vector>
+#include <string>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 using namespace std;
 
-// Tamaño del tablero
 const int N = 8;
+vector<vector<string>> tablero(N, vector<string>(N, " "));
 
-// Tablero de ajedrez
-vector<vector<char>> tablero(N, vector<char>(N, ' '));
-
-// Inicializar ambiente (colocar piezas)
 void inicializarAmbiente()
 {
-    // Piezas negras
-    tablero[0] = {'t', 'c', 'a', 'q', 'k', 'a', 'c', 't'};
-    tablero[1] = {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'};
-
-    // Piezas blancas
-    tablero[6] = {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'};
-    tablero[7] = {'T', 'C', 'A', 'Q', 'K', 'A', 'C', 'T'};
+    // Negras
+    tablero[0] = {"♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜"};
+    tablero[1] = {"♟", "♟", "♟", "♟", "♟", "♟", "♟", "♟"};
+    // Blancas
+    tablero[6] = {"♙", "♙", "♙", "♙", "♙", "♙", "♙", "♙"};
+    tablero[7] = {"♖", "♘", "♗", "♕", "♔", "♗", "♘", "♖"};
 }
 
-// Estado actual del ambiente
 void mostrarAmbiente()
 {
     cout << "\n    A   B   C   D   E   F   G   H\n";
@@ -38,32 +36,72 @@ void mostrarAmbiente()
     cout << "    A   B   C   D   E   F   G   H\n";
 }
 
-// Función para ejecutar un movimiento
-void moverPieza(int filaOrigen, int colOrigen, int filaDestino, int colDestino)
+int letraAColumna(char letra)
 {
-    // Verifica si la casilla de origen tiene una pieza
-    if (tablero[filaOrigen][colOrigen] == ' ')
+    return letra - 'A';
+}
+
+int numeroAFila(char numero)
+{
+    return 8 - (numero - '0');
+}
+
+bool moverPieza(string origen, string destino)
+{
+    int colO = letraAColumna(toupper(origen[0]));
+    int filO = numeroAFila(origen[1]);
+    int colD = letraAColumna(toupper(destino[0]));
+    int filD = numeroAFila(destino[1]);
+
+    if (filO < 0 || filO >= N || colO < 0 || colO >= N ||
+        filD < 0 || filD >= N || colD < 0 || colD >= N)
     {
-        cout << "No hay pieza en la casilla seleccionada.\n";
-        return;
+        cout << "Movimiento fuera del tablero.\n";
+        return false;
     }
 
-    // Mover la pieza
-    tablero[filaDestino][colDestino] = tablero[filaOrigen][colOrigen];
-    tablero[filaOrigen][colOrigen] = ' ';
+    if (tablero[filO][colO] == " ")
+    {
+        cout << "No hay pieza en la casilla de origen.\n";
+        return false;
+    }
 
-    cout << "Movimiento realizado.\n";
+    tablero[filD][colD] = tablero[filO][colO];
+    tablero[filO][colO] = " ";
+    return true;
 }
 
 int main()
 {
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8); // Fuerza UTF-8 en Windows
+#endif
+
     inicializarAmbiente();
     mostrarAmbiente();
 
-    // Ejemplo de movimiento: Peón blanco de E2 a E4
-    cout << "\nEjemplo: mover peon blanco de E2 a E4...\n";
-    moverPieza(6, 4, 4, 4); // fila 6,col 4 → fila 4,col 4
-    mostrarAmbiente();
+    string origen, destino;
+    int turno = 0;
+
+    while (true)
+    {
+        cout << "\nTurno de " << (turno % 2 == 0 ? "BLANCAS" : "NEGRAS") << "\n";
+        cout << "Ingresa movimiento (ej: E2 E4) o 'rendirse' para terminar: ";
+        cin >> origen;
+
+        if (origen == "rendirse")
+        {
+            cout << "La partida ha finalizado.\n";
+            break;
+        }
+
+        cin >> destino;
+        if (moverPieza(origen, destino))
+        {
+            mostrarAmbiente();
+            turno++;
+        }
+    }
 
     return 0;
 }

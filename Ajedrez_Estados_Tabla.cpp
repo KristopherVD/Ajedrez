@@ -89,7 +89,7 @@ bool esMovimientoValido(const Board &b, const string &pieza, int filO, int colO,
         return false;
 
     if (pieza == "♟")
-    { // peón negro (blancas en nuestro código)
+    { // Peón negro
         if (dc == 0 && b[filD][colD] == " ")
         {
             if (df == -1)
@@ -97,13 +97,13 @@ bool esMovimientoValido(const Board &b, const string &pieza, int filO, int colO,
             if (filO == 6 && df == -2 && b[filO - 1][colO] == " ")
                 return true;
         }
-        // Captura diagonal - CORREGIDO: debe capturar piezas negras
+        // Comer en diagonal
         if (abs(dc) == 1 && df == -1 && b[filD][colD] != " " && esNegra(b[filD][colD]))
             return true;
         return false;
     }
     if (pieza == "♙")
-    { // peón blanco (negras en nuestro código)
+    { // Peón blanco
         if (dc == 0 && b[filD][colD] == " ")
         {
             if (df == 1)
@@ -111,13 +111,13 @@ bool esMovimientoValido(const Board &b, const string &pieza, int filO, int colO,
             if (filO == 1 && df == 2 && b[filO + 1][colO] == " ")
                 return true;
         }
-        // Captura diagonal - CORREGIDO: debe capturar piezas blancas
+        // Comer en diagonal
         if (abs(dc) == 1 && df == 1 && b[filD][colD] != " " && esBlanca(b[filD][colD]))
             return true;
         return false;
     }
     if (pieza == "♜" || pieza == "♖")
-    { // torre
+    { // Torre
         if (df == 0 || dc == 0)
         {
             int pasoF = (df == 0 ? 0 : (df > 0 ? 1 : -1));
@@ -135,11 +135,11 @@ bool esMovimientoValido(const Board &b, const string &pieza, int filO, int colO,
         return false;
     }
     if (pieza == "♞" || pieza == "♘")
-    { // caballo
+    { // Caballo
         return (abs(df) == 2 && abs(dc) == 1) || (abs(df) == 1 && abs(dc) == 2);
     }
     if (pieza == "♝" || pieza == "♗")
-    { // alfil
+    { // Alfil
         if (abs(df) == abs(dc))
         {
             int pasoF = (df > 0 ? 1 : -1), pasoC = (dc > 0 ? 1 : -1);
@@ -156,7 +156,7 @@ bool esMovimientoValido(const Board &b, const string &pieza, int filO, int colO,
         return false;
     }
     if (pieza == "♛" || pieza == "♕")
-    { // dama
+    { //  Reina
         if (df == 0 || dc == 0 || abs(df) == abs(dc))
         {
             int pasoF = (df == 0 ? 0 : (df > 0 ? 1 : -1));
@@ -174,7 +174,7 @@ bool esMovimientoValido(const Board &b, const string &pieza, int filO, int colO,
         return false;
     }
     if (pieza == "♚" || pieza == "♔")
-    { // rey
+    { // Rey
         return abs(df) <= 1 && abs(dc) <= 1;
     }
 
@@ -292,13 +292,13 @@ int main()
         }
         catch (...)
         {
-            cout << "Entrada inválida\n";
+            cout << "Entrada invalida\n";
             continue;
         }
 
         if (movimientosAgrupados.find(id) == movimientosAgrupados.end())
         {
-            cout << "ID no válido.\n";
+            cout << "ID no valido.\n";
             continue;
         }
 
@@ -309,7 +309,7 @@ int main()
         if (movs.size() == 1)
         {
             aplicarMovimiento(tablero, movs[0]);
-            cout << "Movimiento automático a " << movs[0].destino << endl;
+            cout << "Movimiento automatico a " << movs[0].destino << endl;
         }
         else
         {
@@ -326,7 +326,7 @@ int main()
 
             if (opcion < 1 || opcion > static_cast<int>(movs.size()))
             {
-                cout << "Destino no válido.\n";
+                cout << "Destino no valido.\n";
                 continue;
             }
             aplicarMovimiento(tablero, movs[opcion - 1]);

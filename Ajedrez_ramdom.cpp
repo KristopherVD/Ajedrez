@@ -91,7 +91,7 @@ bool esMovimientoValido(const Board &b, const string &pieza, int filO, int colO,
         return false;
 
     if (pieza == "♟")
-    { // Peón negro
+    { // Peón (visual hueco) - aquí lo definiste como "negro lógico" en tu convención
         if (dc == 0 && b[filD][colD] == " ")
         {
             if (df == -1)
@@ -99,13 +99,13 @@ bool esMovimientoValido(const Board &b, const string &pieza, int filO, int colO,
             if (filO == 6 && df == -2 && b[filO - 1][colO] == " ")
                 return true;
         }
-        // Comer en diagonal
+        // Comer en diagonal (asegurar que haya pieza contraria)
         if (abs(dc) == 1 && df == -1 && b[filD][colD] != " " && esNegra(b[filD][colD]))
             return true;
         return false;
     }
     if (pieza == "♙")
-    { // Peón blanco
+    { // Peón contrario (visual rellenito) - "blanco lógico"
         if (dc == 0 && b[filD][colD] == " ")
         {
             if (df == 1)
@@ -113,7 +113,6 @@ bool esMovimientoValido(const Board &b, const string &pieza, int filO, int colO,
             if (filO == 1 && df == 2 && b[filO + 1][colO] == " ")
                 return true;
         }
-        // Comer en diagonal
         if (abs(dc) == 1 && df == 1 && b[filD][colD] != " " && esBlanca(b[filD][colD]))
             return true;
         return false;
@@ -192,7 +191,7 @@ struct Movimiento
     string destino;
 };
 
-// ---------- Tabla agrupada con registro ----------
+// ---------- Tabla agrupada con registro (para el jugador humano) ----------
 map<int, vector<Movimiento>> movimientosAgrupados; // Agrupa movimientos por ID
 
 void mostrarJugadasPosibles(const Board &b, bool turnoBlancas)
@@ -260,35 +259,67 @@ void aplicarMovimiento(Board &b, const Movimiento &m)
     b[filO][colO] = " ";
 }
 
-// ---------- Movimiento automático para negras ----------
+// ---------- Movimiento automático para negras con preferencia por capturas ----------
 void movimientoAutomaticoNegras()
 {
-    if (movimientosAgrupados.empty())
+    // Generar lista plana de movimientos para las negras
+    vector<Movimiento> captures;
+    vector<Movimiento> nonCaptures;
+
+    for (int fil = 0; fil < 8; fil++)
+    {
+        for (int col = 0; col < 8; col++)
+        {
+            string pieza = tablero[fil][col];
+            if (pieza == " ")
+                continue;
+            if (!esNegra(pieza))
+                continue; // sólo piezas de las negras
+
+            string origen = string(1, 'A' + col) + to_string(8 - fil);
+
+            for (int f = 0; f < 8; f++)
+            {
+                for (int c = 0; c < 8; c++)
+                {
+                    if (!esMovimientoValido(tablero, pieza, fil, col, f, c))
+                        continue;
+                    string destino = string(1, 'A' + c) + to_string(8 - f);
+
+                    // Si hay pieza rival en destino => captura
+                    if (tablero[f][c] != " " && esBlanca(tablero[f][c]))
+                        captures.push_back({pieza, origen, destino});
+                    else
+                        nonCaptures.push_back({pieza, origen, destino});
+                }
+            }
+        }
+    }
+
+    // Elegir movimiento: prioridad a capturas
+    Movimiento elegido;
+    if (!captures.empty())
+    {
+        elegido = captures[rand() % captures.size()];
+    }
+    else if (!nonCaptures.empty())
+    {
+        elegido = nonCaptures[rand() % nonCaptures.size()];
+    }
+    else
     {
         cout << "No hay movimientos posibles para las negras.\n";
         return;
     }
 
-    // Elegir un ID aleatorio de los disponibles
-    vector<int> idsDisponibles;
-    for (const auto &par : movimientosAgrupados)
-    {
-        idsDisponibles.push_back(par.first);
-    }
+    aplicarMovimiento(tablero, elegido);
 
-    int idElegido = idsDisponibles[rand() % idsDisponibles.size()];
-    auto &movimientosPieza = movimientosAgrupados[idElegido];
-
-    // Elegir un destino aleatorio para esa pieza
-    int destinoElegido = rand() % movimientosPieza.size();
-    Movimiento movimientoElegido = movimientosPieza[destinoElegido];
-
-    // Aplicar el movimiento
-    aplicarMovimiento(tablero, movimientoElegido);
-
-    cout << "La máquina mueve: " << movimientoElegido.pieza
-         << " de " << movimientoElegido.origen
-         << " a " << movimientoElegido.destino << endl;
+    cout << "La máquina mueve: " << elegido.pieza
+         << " de " << elegido.origen
+         << " a " << elegido.destino;
+    if (tablero[8 - (elegido.destino[1] - '0')][elegido.destino[0] - 'A'] == elegido.pieza)
+        cout << " (realizado)";
+    cout << endl;
 }
 
 // ---------- Main ----------
@@ -298,7 +329,7 @@ int main()
     SetConsoleOutputCP(CP_UTF8);
 #endif
     // Inicializar semilla para números aleatorios
-    srand(time(0));
+    srand(static_cast<unsigned int>(time(nullptr)));
 
     inicializarAmbiente();
     int turno = 0;
@@ -375,35 +406,7 @@ int main()
         }
         else
         {
-            // Turno de la máquina (negras)
-            // Calcular movimientos posibles pero no mostrar la tabla
-            movimientosAgrupados.clear();
-            for (int fil = 0; fil < 8; fil++)
-            {
-                for (int col = 0; col < 8; col++)
-                {
-                    string pieza = tablero[fil][col];
-                    if (pieza == " ")
-                        continue;
-                    if (!esNegra(pieza))
-                        continue;
-
-                    string origen = string(1, 'A' + col) + to_string(8 - fil);
-                    for (int f = 0; f < 8; f++)
-                    {
-                        for (int c = 0; c < 8; c++)
-                        {
-                            if (esMovimientoValido(tablero, pieza, fil, col, f, c))
-                            {
-                                string destino = string(1, 'A' + c) + to_string(8 - f);
-                                // Usamos ID 1 temporalmente para agrupar
-                                movimientosAgrupados[1].push_back({pieza, origen, destino});
-                            }
-                        }
-                    }
-                }
-            }
-
+            // Turno de la máquina (negras) — ahora con preferencia por capturas
             movimientoAutomaticoNegras();
         }
 
